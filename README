@@ -1,1 +1,10 @@
 My extensions and dataproviders for zeitgeist
+
+mpris2source:
+Base code to create dataproviders extension with mpris.
+Require https://github.com/hugosenari/mpris2 and https://github.com/hugosenari/pydbusdecorator
+
+gmusicbrowser:
+Is a dataprovider extension to register songs played with gmusicbrowser.
+Require mpris2source.py
+For some reason Activity Journal doesn't show this logs, but Synapse shows.
