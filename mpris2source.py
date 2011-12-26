@@ -1,3 +1,13 @@
+"""
+Zeitgeist base code to register mpris2 playing information.
+
+Thanks to: http://milky.manishsinha.net/2010/11/27/zeitgeist-daemon-extensions-explained/
+Require:
+https://github.com/hugosenari/mpris2 and https://github.com/hugosenari/pydbusdecorator
+
+Install it at:
+$HOME/.local/share/zeitgeist/extensions/
+"""
 #my mpris2 lib
 from mpris2 import Player
 from mpris2.interfaces import Interfaces

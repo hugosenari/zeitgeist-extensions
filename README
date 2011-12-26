@@ -1,5 +1,7 @@
 My extensions and dataproviders for zeitgeist
 
+Copy files to: $HOME/.local/share/zeitgeist/extensions/
+
 mpris2source:
 Base code to create dataproviders extension with mpris.
 Require https://github.com/hugosenari/mpris2 and https://github.com/hugosenari/pydbusdecorator
