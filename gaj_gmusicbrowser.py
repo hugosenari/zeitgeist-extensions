@@ -18,11 +18,11 @@ def activate(client, store, window):
     :param store: the date based store which is used by journal to handle event and content object request
     :param window: the activity journal primary window
     """
-    gmb = Mpris2Source.__init__(self,
-                          "%s.%s" % (Interfaces.PLAYER, SomePlayers.GMUSICBROWSER), #dbus_uri: org.freedesktop.mpris2.gmusicbrowser
-                          "application://gmusicbrowser.desktop", #app uri for zeitgeist
-                          "Gmusicbrowser", #app name
-                          "An open-source jukebox for large collections of mp3/ogg/flac/mpc/ape files, written in perl") #app description
+    gmb = Mpris2Source(
+          "%s.%s" % (Interfaces.PLAYER, SomePlayers.GMUSICBROWSER), #dbus_uri: org.freedesktop.mpris2.gmusicbrowser
+          "application://gmusicbrowser.desktop", #app uri for zeitgeist
+          "Gmusicbrowser", #app name
+          "An open-source jukebox for large collections of mp3/ogg/flac/mpc/ape files, written in perl") #app description}
     print "Activate Gmusicbrowser plugin"
 
 
