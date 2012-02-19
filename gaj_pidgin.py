@@ -18,7 +18,7 @@ def activate(client, store, window):
     """
     pidgin = PidginSource()
     def event_sent(*args):
-        print args
+        pass
     pidgin.event_sent = event_sent
     print "Activate pidgin plugin"
 
