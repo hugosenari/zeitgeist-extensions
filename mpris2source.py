@@ -52,7 +52,7 @@ class Mpris2Source(object):
 		self.interpretation = interpretation
 		self.storage = storage
 		self.client = None
-		
+
 		def _handler(*args, **kw):
 			#when extension is loading there is no Zeitgeist to connect
 			#then try to connect after when song changes
@@ -65,7 +65,7 @@ class Mpris2Source(object):
 
 			if self.client:
 				self.property_changed(*args, **kw)
-			
+
 		session = get_session()
 		session.add_signal_receiver(
 			_handler,
@@ -73,7 +73,7 @@ class Mpris2Source(object):
 			Interfaces.PROPERTIES,
 			bus_name=bus_name,
 			path=Interfaces.OBJECT_PATH)
-	
+
 	def property_changed(*args, **kw):
 		""" Callback for mpris2 property change
 		With *args and **kw, that player pass from signal org.freedesktop.DBus.Properties.PropertiesChanged
@@ -88,7 +88,7 @@ class Mpris2Source(object):
 			self.playing.get(Metadata_Map.TRACKID) == \
 				now_playing.get(Metadata_Map.TRACKID):
 			return self.register_same_media_event(now_playing, *args, **kw)
-		
+
 		if now_playing:
 			#register leave if has previous media as playing
 			if self.playing:
@@ -97,7 +97,7 @@ class Mpris2Source(object):
 			self.register_now_playing_event(now_playing, *args, **kw)
 			#override playing with new media
 			self.playing = playing
-	
+
 	def register_same_media_event(media, *args, **kw):
 		""" Called when property changed but the song is the same,
 		Now it is doing nothing but you can override it to register one event calling
@@ -108,7 +108,7 @@ class Mpris2Source(object):
 		:param **kw: **kw from property_changed (player mpris signal)
 		"""
 		pass
-	
+
 	def register_now_playing_event(media, *args, **kw):
 		""" Called when has new media to be registered as "ACCESS_EVENT",
 		this is when media starts.
@@ -119,8 +119,8 @@ class Mpris2Source(object):
 		:param *args: *args from property_changed (player mpris signal)
 		:param **kw: **kw from property_changed (player mpris signal)
 		"""
-		self.register_media_event(media, Interpretation.ACCESS_EVENT, *args, **kw)
-			
+		self.register_media_event(media, Interpretation.EVENT_INTERPRETATION.ACCESS_EVENT, *args, **kw)
+
 	def register_previous_event(media, *args, **kw):
 		""" Called when has previous media to be registered as "LEAVE_EVENT", 
 		this is when media stops (only when is has new song to play not when stops)
@@ -131,8 +131,8 @@ class Mpris2Source(object):
 		:param *args: *args from property_changed (player mpris signal)
 		:param **kw: **kw from property_changed (player mpris signal)
 		"""
-		self.register_media_event(media, Interpretation.LEAVE_EVENT, *args, **kw)
-	
+		self.register_media_event(media, Interpretation.EVENT_INTERPRETATION.LEAVE_EVENT, *args, **kw)
+
 	def register_media_event(media, interpretation, *args, **kw):
 		""" Called as last in line to register event.
 		This function was designed to not require overrided
@@ -154,31 +154,31 @@ class Mpris2Source(object):
 		"""
 		#subject
 		subject_values = kw.get("subject_values", {
-			"interpretation" : kw.get("subject_interpretation", self.interpretation),#FIXME get information from file
+			"interpretation" : kw.get("subject_interpretation", self.interpretation), #FIXME get information from file
 			"manifestation" : kw.get("subject_manifestation", Manifestation.FILE_DATA_OBJECT),
 			"uri" : kw.get("uri", media.get(Metadata_Map.URL)),
 			"current_uri" : kw.get("current_uri", media.get(Metadata_Map.URL)),
-			"origin" : kw.get("origin", media.get(Metadata_Map.URL, "").replace(".\/+","\/")),
-			"mimetype" : kw.get("mimetype", self.minetype),#FIXME get information from file
+			"origin" : kw.get("origin", media.get(Metadata_Map.URL, "").replace(".\/+", "\/")),
+			"mimetype" : kw.get("mimetype", self.minetype), #FIXME get information from file
 			"text" : kw.get("text", "%s - %s - %s - %s" % (
 					media.get(Metadata_Map.TRACK_NUMBER, ""),
 					media.get(Metadata_Map.TITLE, ""),
 					media.get(Metadata_Map.ARTIST, ""),
 					media.get(Metadata_Map.ALBUM, ""))),
-			"storage": kw.get("storage", self.storage),#FIXME get information from file
+			"storage": kw.get("storage", self.storage), #FIXME get information from file
 		})
 		subject = kw.get("subject", Subject.new_for_values(**subject_values))
 		#event
-		event_values = kw.get("event_values",{
+		event_values = kw.get("event_values", {
 			"actor" : kw.get("actor", self.app_uri),
 			"interpretation": kw.get("event_interpretation", interpretation),
-			"manifestation": kw.get("event_manifestation", Manifestation.SCHEDULED_ACTIVITY),
+			"manifestation": kw.get("event_manifestation", Manifestation.EVENT_MANIFESTATION.SCHEDULED_ACTIVITY),
 		})
 		event = kw.get("event", Event.new_for_values(**event_values))
 		event.append_subject(subject)
 		#send this to zeitgeist
 		self.client.insert_event(event)
-	
+
 	def _get_client(self, bus_name, app_uri, app_name, app_description,
 				event_template):
 		client = None

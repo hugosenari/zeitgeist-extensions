@@ -14,14 +14,14 @@ $HOME/.local/share/zeitgeist/extensions/
 
 from mpris2.interfaces import Interfaces
 from mpris2.utils import SomePlayers
-from _zeitgeist.engine.extension import Extension
 from mpris2source import Mpris2Source
+from _zeitgeist.engine.extension import Extension
 
 class gmusicbrowser(Extension, Mpris2Source):
 	def __init__(self, engine):
-                """Constructor"""
+		"""Constructor"""
 		Extension.__init__(self, engine)
-                Mpris2Source.__init__(self,
+        Mpris2Source.__init__(self,
                                       "%s.%s" % (Interfaces.PLAYER, SomePlayers.GMUSICBROWSER), #dbus_uri: org.freedesktop.mpris2.gmusicbrowser
                                       "application://gmusicbrowser.desktop", #app uri for zeitgeist
                                       "Gmusicbrowser", #app name

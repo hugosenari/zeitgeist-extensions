@@ -18,7 +18,7 @@ class PidginSource(object):
         self.tags = re.compile("<\/?[^>]+>")
         self.uris = re.compile("[a-zA-Z1-9]+:\/\/[^\s\"<>]+")
         self.account_path = None
-        self.event_sent = lambda s, e: e
+        self.event_sent = lambda * e: e
         self.pigeon = pidgin.PurpleInterface()
         self.pigeon.SentChatMsg = self.register_sent_message
         self.pigeon.SentImMsg = self.register_sent_message

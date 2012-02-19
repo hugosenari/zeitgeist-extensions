@@ -1,6 +1,13 @@
 My extensions and dataproviders for zeitgeist
 
-Copy files to: $HOME/.local/share/zeitgeist/extensions/
+For zeitgeist plugins: 
+copy files to $HOME/.local/share/zeitgeist/extensions/
+And restart reitgeist daemon
+
+For Gnome Activity Journal:
+copy gaj_*.py files to $HOME/.local/share/gnome-activity-journal/plugins/
+And restar GAJ
+
 
 mpris2source:
 Base code to create dataproviders extension with mpris.
@@ -10,3 +17,8 @@ gmusicbrowser:
 Is a dataprovider extension to register songs played with gmusicbrowser.
 Require mpris2source.py
 For some reason Activity Journal doesn't show this logs, but Synapse shows.
+
+pidgin:
+Is a dataprovider extension to register new messages received from pidgin
+Require pydbusdecorator
+Maybe make more sense place it on pidgin, but I don't want to rewrite in c or perl :P
