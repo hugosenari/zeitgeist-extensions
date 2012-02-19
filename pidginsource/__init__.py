@@ -75,15 +75,19 @@ class PidginSource(object):
                 mimetype="text/plain",
                 text="%s: %s" % (who, self._strip_tags(msg)))
         subjects = [subject]
-        for link in self.uris.findall(msg):
-            subject = Subject.new_for_values(
-                    uri=link,
-                    interpretation=unicode(Interpretation.WEBSITE),
-                    manifestation=unicode(Manifestation.FILE_DATA_OBJECT.REMOTE_DATA_OBJECT),
-                    origin=self.account_path,
-                    mimetype="text/html",
-                    text=link)
-            subjects.append(subject)
+        uris = self.uris.findall(msg)
+        for link in uris:
+            if uris.count(link) == 1:
+                subject = Subject.new_for_values(
+                        uri=link,
+                        interpretation=unicode(Interpretation.WEBSITE),
+                        manifestation=unicode(Manifestation.FILE_DATA_OBJECT.REMOTE_DATA_OBJECT),
+                        origin=self.account_path,
+                        mimetype="text/html",
+                        text=link)
+                subjects.append(subject)
+            else:
+                uris.remove(link)
         event_info['subjects'] = subjects
 
         event_info['actor'] = 'application://pidgin.desktop'
