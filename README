@@ -17,6 +17,7 @@ gmusicbrowser:
 Is a dataprovider extension to register songs played with gmusicbrowser.
 Require mpris2source.py
 For some reason Activity Journal doesn't show this logs, but Synapse shows.
+I wrote one perl version of this but for some reason dbus module for perl don't work properly 
 
 pidgin:
 Is a dataprovider extension to register new messages received from pidgin

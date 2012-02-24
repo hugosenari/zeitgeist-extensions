@@ -11,12 +11,15 @@ import pidgin
 from zeitgeist.client import ZeitgeistClient
 from zeitgeist.datamodel import Event, Interpretation, Manifestation, Subject
 
+TAGS = re.compile("<\/?[^>]+>")
+URIS = re.compile("[a-zA-Z1-9]+:\/\/[^\s\"<>]+")
+HTTP = re.compile("^http.+")
+FILE = re.compile("^file.+")
+
 class PidginSource(object):
     def __init__(self):
         """Constructor"""
         self._client = None
-        self.tags = re.compile("<\/?[^>]+>")
-        self.uris = re.compile("[a-zA-Z1-9]+:\/\/[^\s\"<>]+")
         self.account_path = None
         self.event_sent = lambda * e: e
         self.pigeon = pidgin.PurpleInterface()
@@ -51,17 +54,15 @@ class PidginSource(object):
         return self._client
 
     def _strip_tags(self, msg):
-        return self.tags.sub("", msg)
+        return TAGS.sub("", msg)
 
     def register_received_message(self, obj, ac_id, who, msg, *args, **kw):
-        self.account_path = "%s/%s" % (ac_id, who)
         self.register_message_event(ac_id, who, msg, {
             'manifestation': Manifestation.EVENT_MANIFESTATION.USER_ACTIVITY,
             'interpretation': Interpretation.EVENT_INTERPRETATION.RECEIVE_EVENT
         })
 
     def register_sent_message(self, obj, ac_id, who, msg, *args, **kw):
-        self.account_path = "%s/%s" % (ac_id, who)
         self.register_message_event(ac_id, who, msg, {
             'manifestation': Manifestation.EVENT_MANIFESTATION.WORLD_ACTIVITY,
             'interpretation': Interpretation.EVENT_INTERPRETATION.SEND_EVENT
@@ -69,19 +70,26 @@ class PidginSource(object):
 
     def register_message_event(self, ac_id, who, msg, event_info):
         subject = Subject.new_for_values(
+                uri="pidgin://%s/%s" % (ac_id, who),
                 interpretation=unicode(Interpretation.IMMESSAGE),
                 manifestation=unicode(Manifestation.SOFTWARE_SERVICE),
-                origin=self.account_path,
+                origin="%s" % (ac_id,),
                 mimetype="text/plain",
                 text="%s: %s" % (who, self._strip_tags(msg)))
         subjects = [subject]
-        uris = self.uris.findall(msg)
+        uris = URIS.findall(msg)
         for link in uris:
             if uris.count(link) == 1:
                 subject = Subject.new_for_values(
                         uri=link,
                         interpretation=unicode(Interpretation.WEBSITE),
-                        manifestation=unicode(Manifestation.FILE_DATA_OBJECT.REMOTE_DATA_OBJECT),
+                        manifestation=unicode(#WEB if match http
+                                              Manifestation.WEB_DATA_OBJECT  if HTTP.match(link)\
+                                              #File if match file
+                                              else Manifestation.FILE_DATA_OBJECT if FILE.match(link)\
+                                              #something else
+                                              else Manifestation.FILE_DATA_OBJECT.REMOTE_DATA_OBJECT
+                                            ),
                         origin=self.account_path,
                         mimetype="text/html",
                         text=link)
@@ -89,6 +97,7 @@ class PidginSource(object):
             else:
                 uris.remove(link)
         event_info['subjects'] = subjects
+        event_info['timestamp'] = int(time.time() * 1000)
 
         event_info['actor'] = 'application://pidgin.desktop'
         self.zclient.insert_event_for_values(**event_info)
