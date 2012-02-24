@@ -13,9 +13,10 @@ __plugin_name__ = "Gmusicbrowser Plugin"
 # Enter a detailed description here
 __description__ = "Plugin for Gmusicbrowser played logger"
 
+LOG_LEVEL = logging.DEBUG
 
 def log(level, msg, *args, **kw):
-    if level > logging.DEBUG:
+    if level >= LOG_LEVEL:
         print Mpris2Source.__name__, msg % args, kw
 
 def activate(client, store, window):

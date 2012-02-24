@@ -11,14 +11,16 @@ $HOME/.local/share/zeitgeist/extensions/
 """
 import time
 import logging
+from dbus.exceptions import DBusException
 #my mpris2 lib
-from mpris2 import Player
+from mpris2 import Player, MediaPlayer2
 from mpris2.interfaces import Interfaces
 from mpris2.types import Metadata_Map
-from mpris2.utils import get_session
+from mpris2.utils import get_session, get_players_uri
 #zeitgeist lib
 from zeitgeist.client import ZeitgeistClient
 from zeitgeist.datamodel import Event, Interpretation, Manifestation, Subject
+
 
 
 def log(*args, **kw):
@@ -56,7 +58,8 @@ class Mpris2Source(object):
         :param storage: default subject storage since this code don't know to get it for each media
         """
         self.playing = None
-        self.player = Player(dbus_interface_info={'dbus_uri':bus_name})
+        self.bus_name = bus_name
+        self._player = None
         self.app_uri = app_uri
         self.minetype = minetype
         self.interpretation = interpretation
@@ -85,7 +88,20 @@ class Mpris2Source(object):
             _handler,
             Interfaces.SIGNAL, Interfaces.PROPERTIES,
             bus_name, Interfaces.OBJECT_PATH)
-        self.log(logging.INFO, 'started')
+        self.log(logging.INFO, 'started: %s', bus_name)
+
+    @property
+    def player(self):
+        try:
+            #test if dbus connection can be used
+            if self._player:
+                self._player.CanControl
+                return self._player
+        except DBusException as e:
+            #try create another connection
+            self.log(logging.DEBUG, 'connection to %s is off, trying reconnect', self.bus_name)
+        self._player = Player(dbus_interface_info={'dbus_uri':self.bus_name})
+        return self._player
 
     def property_changed(self, *args, **kw):
         """ Callback for mpris2 property change
@@ -255,18 +271,51 @@ class Mpris2Source(object):
         return client
 
 
+class Mpris2Sources(object):
+    def __init__(self, pattern='.', log=log, *args, **kw):
+        self.uris = get_players_uri(pattern)
+        self.sources = {}
+        self.log = log
+        self.scan(self.uris)
+
+
+    def __getitem__(self, key):
+        return self.sources[key]
+
+    def __delitem__(self, key):
+        del self.sources[key]
+
+    def scan(self, uris):
+        for uri in uris:
+            try:
+                mediaplayer = MediaPlayer2(dbus_interface_info={'dbus_uri': uri})
+                if self.sources.has_key(uri):
+                    self.log(logging.DEBUG, 'Connection with %s is ok', mediaplayer.Identity)
+                else:
+                    self.log(logging.DEBUG, 'New client found: %s', uri)
+                    self.sources[uri] = Mpris2Source(uri,
+                        "application://%s.desktop" % mediaplayer.DesktopEntry,
+                        mediaplayer.DesktopEntry,
+                        mediaplayer.Identity,
+                        log=self.log)
+            except:
+                self.log(logging.ERROR, 'error when try use: %s', uri)
+
+    def rescan(self):
+        self.scan(get_players_uri())
+
 if "__main__" == __name__:
     from dbus.mainloop.glib import DBusGMainLoop
-    import gobject, dbus
+    import gobject, dbus, time
+
     DBusGMainLoop(set_as_default=True)
     mloop = gobject.MainLoop()
-    logging.basicConfig(level=logging.INFO)
-    Mpris2Source("org.mpris.MediaPlayer2.gmusicbrowser",
-              #app uri for zeitgeist
-              "application://gmusicbrowser.desktop",
-              #app name
-              "Gmusicbrowser",
-              #app description
-              "An open-source jukebox for large collections "
-              "of mp3/ogg/flac/mpc/ape files, written in perl",)
+    logging.basicConfig(level=logging.DEBUG)
+
+    mpris2sources = Mpris2Sources()
+    def rescan():
+        mpris2sources.rescan()
+        gobject.timeout_add_seconds(4, rescan)
+
+    rescan()
     mloop.run()
