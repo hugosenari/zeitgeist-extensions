@@ -3,7 +3,7 @@ Created on Feb 19, 2012
 
 @author: hugosenari
 '''
-import gobject, logging
+import gobject, logging, dbus
 #couchdb lib
 from desktopcouch.records.server import DesktopDatabase
 from desktopcouch.records.record import Record as CouchRecord
@@ -13,6 +13,7 @@ from couchdb.http import ResourceNotFound
 from zeitgeist.client import ZeitgeistClient, ZeitgeistDBusInterface
 from zeitgeist.datamodel import Event, Interpretation, Manifestation, Subject, \
  TimeRange, ResultType, StorageState
+from couchdb.client import ViewResults
 
 class _constant(object):
     def __init__(self):
@@ -91,6 +92,8 @@ class _CouchdbCommon(object):
         else:
             self.log(logging.DEBUG, """view %s exist in %s with""", view.name, DATABASE_NAME)
 
+    def _execute_view(self, view):
+        return self._database.execute_view(view.name, DATABASE_NAME)
 
     def last_transaction(self, when=None):
         '''
@@ -175,47 +178,90 @@ class Consumer(_CouchdbCommon):
         _CouchdbCommon.__init__(self, *args, **kw)
 
 
-    def transport(self):
+    def transport(self, events=[]):
         '''
         Update couchdb with events
         '''
-        events = []
-        last = self.last_transaction()
-        #get events
-        if (last):
-            self.log(logging.INFO, "getting itens created after %s", last)
-            #update of database
-            #count
-            from_last_to_now = TimeRange.until_now()
-            from_last_to_now.begin = int(last) + 1
-            events = self._zdclient.FindEvents(
-                #timerange
-                from_last_to_now,
-                [],
-                StorageState.Any,
-                0,
-                ResultType.LeastRecentEvents
-            )
-        else:
-            self.log(logging.INFO, "First interaction, getting last item")
-            #fist interaction with database
-            events = self._zdclient.FindEvents(
-                #timerange
-                TimeRange.always(),
-                [],
-                StorageState.Any,
-                1,
-                ResultType.MostRecentEvents
-            )
+        self.log(logging.INFO, "Insert events into couchdb")
+        if events == []:
+            last = self.last_transaction()
+            #get events
+            if (last):
+                self.log(logging.INFO, "getting itens created after %s", last)
+                #update of database
+                #count
+                from_last_to_now = TimeRange.until_now()
+                from_last_to_now.begin = int(last) + 1
+                _events = self._zdclient.FindEvents(
+                    #timerange
+                    from_last_to_now,
+                    [],
+                    StorageState.Any,
+                    0,
+                    ResultType.LeastRecentEvents
+                )
+            else:
+                self.log(logging.INFO, "First interaction, getting last item")
+                #fist interaction with database
+                _events = self._zdclient.FindEvents(
+                    #timerange
+                    TimeRange.always(),
+                    [],
+                    StorageState.Any,
+                    1,
+                    ResultType.MostRecentEvents
+                )
         #convert into records
         records = []
-        [records.append(self.zgToDb(Event(event)))\
-            for event in events]
+        [records.append(
+            self.zgToDb(Event(event)) if isinstance(event, dbus.Struct)\
+            else self.zgToDb(event) if isinstance(event, Event)\
+            else event
+            ) for event in events]
         #put on couchdb
         self.log(logging.INFO, "put %s records in couchdb", len(records))
         self.put_records(records)
         #save last as last_transaction
         if len(records): self.last_transaction(records[-1]['timestamp'])
+
+    def purge(self, events_ids=[]):
+        eventsbyid = self._execute_view(VIEW.ID)
+        self.log(logging.INFO, "Delete events into couchdb: %s", events_ids)
+        for id in events_ids:
+            try:
+                for event in eventsbyid[id]:
+                    self.log(logging.DEBUG,
+                             "delete event into couchdb: %s, %s",
+                             event.key, event.value['_id'])
+                    self._database.delete_record(event.value['_id'])
+            except Exception as e:
+                self.log(logging.DEBUG, 'cannot delete event with id: %s, exception: e', id, e)
+
+
+    def monitor(self, timerange=TimeRange.always(), event_templates=[], insert_handler=None, delete_handler=None):
+        '''
+        Monitor for new and events deletes
+        timerange: TimeRange to monitore
+        event_templates: array with Event that need match to monitore
+        insert_handler: function that receive insert events
+        delete_handler: function that receive ids of removed events
+        '''
+        def insert(timerange, events, *args, **kws):
+            if insert_handler:
+                insert_handler(timerange, events, *args, **kws)
+            else:
+                self.transport(events)
+
+        def delete(timerange, events_ids, *args, **kws):
+            if delete_handler:
+                delete_handler(timerange, events_ids, *args, **kws)
+            else:
+                self.purge(events_ids)
+
+        self._zclient.install_monitor(TimeRange.always(),
+                                      [],
+                                      insert,
+                                      delete)
 
 
 if "__main__" == __name__:
@@ -227,10 +273,6 @@ if "__main__" == __name__:
     logging.basicConfig(level=logging.INFO)
 
     consumer = Consumer()
-    def transport():
-        consumer.transport()
-        gobject.timeout_add_seconds(14, transport)
-
-    transport()
+    consumer.monitor()
 
     mloop.run()

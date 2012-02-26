@@ -1,14 +1,14 @@
-import logging, gobject
+'''
+Created on Feb 26, 2012
 
-from mpris2.utils import SomePlayers
-from mpris2source import Mpris2Sources
+@author: hugosenari
+'''
+import logging
+from couchdbsource import Consumer
 
-__plugin_name__ = "Mpris2 Plugin"
+__plugin_name__ = "Zeitgeist to Desktopcouch"
 # Enter a detailed description here
-__description__ = "Plugin for Mpris2 players logger"
-
-
-TIME_FOR_RESCAN = 10 #in seconds
+__description__ = "Push events from zeitgeist to destktopcouch"
 LOG_LEVEL = logging.DEBUG
 
 def log(level, msg, *args, **kw):
@@ -24,14 +24,9 @@ def activate(client, store, window):
         journal to handle event and content object request
     :param window: the activity journal primary window
     """
-    window.MPRIS2PLUGIN = mpris2sources = Mpris2Sources(log=log)
-    def rescan():
-        mpris2sources.rescan()
-        gobject.timeout_add_seconds(TIME_FOR_RESCAN, rescan)
-
-    rescan()
-
-    log(logging.INFO, "Activate Mpris2 plugin:")
+    window.ZGDESCKTOPCOUCH = consumer = Consumer(log=log)
+    consumer.monitor()
+    log(logging.INFO, "Activate Zeitgeist to Desktopcouch plugin:")
 
 
 
@@ -44,6 +39,5 @@ def deactivate(client, store, window):
         journal to handle event and content object request
     :param window: the activity journal primary window
     """
-    del window.MPRIS2PLUGIN
-    log(logging.INFO, "Deactivate Mpris2 plugin")
-
+    del window.ZGDESCKTOPCOUCH
+    log(logging.INFO, "Deactivate Zeitgeist to Desktopcouch plugin:")
