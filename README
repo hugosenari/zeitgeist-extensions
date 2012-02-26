@@ -1,5 +1,9 @@
 My extensions and dataproviders for zeitgeist
 
+For modules:
+You can run any module (*source/__init__.py: ie: python mpris2source/__init__.py)
+This commonly do the same as plugin do but standalone
+
 For zeitgeist plugins: 
 copy files to $HOME/.local/share/zeitgeist/extensions/
 And restart reitgeist daemon
@@ -13,17 +17,28 @@ mpris2source:
 Base code to create dataproviders extension with mpris.
 Require https://github.com/hugosenari/mpris2 and https://github.com/hugosenari/pydbusdecorator
 
-mpris2:
-Is a dataprovider extension to register songs played with any running mpri2 media player.
-Require mpris2source
+	mpris2:
+	Is a dataprovider extension to register songs played with any running mpri2 media player.
+	Require mpris2source
+	
+	gmusicbrowser:
+	Is a dataprovider extension to register songs played with gmusicbrowser.
+	Require mpris2source
+	I wrote one perl version of this but for some reason dbus module for perl don't work properly 
 
-gmusicbrowser:
-Is a dataprovider extension to register songs played with gmusicbrowser.
-Require mpris2source
-I wrote one perl version of this but for some reason dbus module for perl don't work properly 
+pidginsource:
+Base code to use pidgin as dataprovider
+Require https://github.com/hugosenari/pydbusdecorator
 
-pidgin:
-Is a dataprovider extension to register new messages received from pidgin
-Require pydbusdecorator
-Maybe make more sense place it on pidgin, but I don't want to rewrite in c :P
+	pidgin:
+	Is a dataprovider extension to register new messages received from pidgin
+	Require pydbusdecorator
+	Maybe make more sense place it on pidgin, but I don't want to rewrite in c :P
 
+couchdbsource:
+Base code to sync desktopcouch and zeitgeist
+Current version only send from zeitgeist to desktopcouch
+
+	zeitgeist_to_desktopcouch:
+	Is a zeitgeist extension to send new events to couchdesktop
+	require couchdbsource
