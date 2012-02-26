@@ -16,6 +16,15 @@ URIS = re.compile("[a-zA-Z1-9]+:\/\/[^\s\"<>]+")
 HTTP = re.compile("^http.+")
 FILE = re.compile("^file.+")
 
+def storage_from_uri(uri):
+    if FILE.match(uri):
+        return 'local'
+    return 'web'
+
+def origin_from_uri(uri):
+    parts = uri.split('://')
+    return "%s://%s" % (parts[0], parts[1].split('/')[0])
+
 class PidginSource(object):
     def __init__(self):
         """Constructor"""
@@ -75,9 +84,10 @@ class PidginSource(object):
                 manifestation=unicode(Manifestation.SOFTWARE_SERVICE),
                 origin="%s" % (ac_id,),
                 mimetype="text/plain",
-                text="%s: %s" % (who, self._strip_tags(msg)))
+                storage="local",
+                text="%s" % (self._strip_tags(msg)))
         subjects = [subject]
-        uris = URIS.findall(msg)
+        uris = URIS.findall(self._strip_tags(msg))
         for link in uris:
             if uris.count(link) == 1:
                 subject = Subject.new_for_values(
@@ -90,8 +100,8 @@ class PidginSource(object):
                                               #something else
                                               else Manifestation.FILE_DATA_OBJECT.REMOTE_DATA_OBJECT
                                             ),
-                        origin=self.account_path,
-                        mimetype="text/html",
+                        origin=origin_from_uri(link),
+                        storage=storage_from_uri(link),
                         text=link)
                 subjects.append(subject)
             else:
@@ -111,6 +121,6 @@ if __name__ == "__main__":
     mloop = gobject.MainLoop()
     pidginsource = PidginSource()
     def event_sent(*args):
-        print args
+        pass
     pidginsource.event_sent = event_sent
     mloop.run()

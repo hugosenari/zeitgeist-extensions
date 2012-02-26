@@ -11,6 +11,7 @@ $HOME/.local/share/zeitgeist/extensions/
 """
 import time
 import logging
+import re
 from dbus.exceptions import DBusException
 #my mpris2 lib
 from mpris2 import Player, MediaPlayer2
@@ -21,7 +22,19 @@ from mpris2.utils import get_session, get_players_uri
 from zeitgeist.client import ZeitgeistClient
 from zeitgeist.datamodel import Event, Interpretation, Manifestation, Subject
 
+TAGS = re.compile("<\/?[^>]+>")
+URIS = re.compile("[a-zA-Z1-9]+:\/\/[^\s\"<>]+")
+HTTP = re.compile("^http.+")
+FILE = re.compile("^file.+")
 
+def storage_from_uri(uri):
+    if FILE.match(uri):
+        return 'local'
+    return 'web'
+
+def origin_from_uri(uri):
+    parts = uri.split('://')
+    return "%s://%s" % (parts[0], parts[1].split('/')[0])
 
 def log(*args, **kw):
     logging.getLogger(Mpris2Source.__name__).log(*args, **kw)
@@ -310,7 +323,7 @@ if "__main__" == __name__:
 
     DBusGMainLoop(set_as_default=True)
     mloop = gobject.MainLoop()
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     mpris2sources = Mpris2Sources()
     def rescan():
