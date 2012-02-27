@@ -5,12 +5,12 @@ You can run any module (*source/__init__.py: ie: python mpris2source/__init__.py
 This commonly do the same as plugin do but standalone
 
 For zeitgeist plugins: 
-copy files to $HOME/.local/share/zeitgeist/extensions/
+copy files and modules (directory) to $HOME/.local/share/zeitgeist/extensions/
 And restart reitgeist daemon
 
 For Gnome Activity Journal:
-copy gaj_*.py files to $HOME/.local/share/gnome-activity-journal/plugins/
-And restar GAJ
+copy gaj_*.py files and modules (directory) to $HOME/.local/share/gnome-activity-journal/plugins/
+And restart GAJ
 
 
 mpris2source:

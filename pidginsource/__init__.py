@@ -121,6 +121,6 @@ if __name__ == "__main__":
     mloop = gobject.MainLoop()
     pidginsource = PidginSource()
     def event_sent(*args):
-        pass
+        print args
     pidginsource.event_sent = event_sent
     mloop.run()
