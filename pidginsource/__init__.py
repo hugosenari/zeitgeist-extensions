@@ -6,7 +6,7 @@ Created on Feb 19, 2012
 import re
 import time
 #pidgin dbus interface
-import pidgin
+import pidgin_purple_service as pidgin
 #zeitgeist lib
 from zeitgeist.client import ZeitgeistClient
 from zeitgeist.datamodel import Event, Interpretation, Manifestation, Subject
@@ -67,13 +67,13 @@ class PidginSource(object):
 
     def register_received_message(self, obj, ac_id, who, msg, *args, **kw):
         self.register_message_event(ac_id, who, msg, {
-            'manifestation': Manifestation.EVENT_MANIFESTATION.USER_ACTIVITY,
+            'manifestation': Manifestation.EVENT_MANIFESTATION.WORLD_ACTIVITY,
             'interpretation': Interpretation.EVENT_INTERPRETATION.RECEIVE_EVENT
         })
 
     def register_sent_message(self, obj, ac_id, who, msg, *args, **kw):
         self.register_message_event(ac_id, who, msg, {
-            'manifestation': Manifestation.EVENT_MANIFESTATION.WORLD_ACTIVITY,
+            'manifestation': Manifestation.EVENT_MANIFESTATION.USER_ACTIVITY,
             'interpretation': Interpretation.EVENT_INTERPRETATION.SEND_EVENT
         })
 
@@ -82,7 +82,7 @@ class PidginSource(object):
                 uri="pidgin://%s/%s" % (ac_id, who),
                 interpretation=unicode(Interpretation.IMMESSAGE),
                 manifestation=unicode(Manifestation.SOFTWARE_SERVICE),
-                origin="%s" % (ac_id,),
+                origin="pidgin://%s" % (ac_id,),
                 mimetype="text/plain",
                 storage="local",
                 text="%s" % (self._strip_tags(msg)))
@@ -111,7 +111,7 @@ class PidginSource(object):
 
         event_info['actor'] = 'application://pidgin.desktop'
         self.zclient.insert_event_for_values(**event_info)
-        self.event_sent(event_info)
+        self.event_sent(ac_id, who, msg, event_info)
 
 if __name__ == "__main__":
     from dbus.mainloop.glib import DBusGMainLoop
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     DBusGMainLoop(set_as_default=True)
     mloop = gobject.MainLoop()
     pidginsource = PidginSource()
-    def event_sent(*args):
-        print args
+    def event_sent(ac_id, who, msg, event_info):
+        print who, ', sayd: ', msg
     pidginsource.event_sent = event_sent
     mloop.run()
