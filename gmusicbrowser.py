@@ -5,6 +5,8 @@ Created on Feb 24, 2012
 '''
 #mpris2source
 from mpris2source import Mpris2Source
+from mpris2.interfaces import Interfaces
+from mpris2.some_players import Some_Players
 #zeitgeist
 from _zeitgeist.engine.extension import Extension
 
