@@ -12,6 +12,7 @@ $HOME/.local/share/zeitgeist/extensions/
 import time
 import logging
 import re
+from dbus import Array
 from dbus.exceptions import DBusException
 #my mpris2 lib
 from mpris2 import Player, MediaPlayer2
@@ -95,6 +96,15 @@ class Mpris2Source(object):
                                 event_template)
 
             if self.client:
+                if not kw.keys():
+                    self.log(logging.DEBUG, 'this signal dont have keywords')
+                    for arg in args:
+                        if isinstance(arg, dict) and arg.get("Metadata", False):
+                            self.log(logging.DEBUG, 'metadata founded in args')
+                            kw["now_playing"] = arg.get("Metadata")
+                if not kw.keys():
+                    self.log(logging.DEBUG, 'this signal dont have new metadata')
+                    return
                 self.property_changed(*args, **kw)
 
         get_session().add_signal_receiver(
@@ -125,7 +135,14 @@ class Mpris2Source(object):
         :param **kw: **kw from property_changed (player mpris signal)
         """
         self.log(logging.DEBUG, 'property changed, %s', args)
-        now_playing = kw.get("now_playing", self.player.Metadata)
+        now_playing = kw.get("now_playing", False)
+        if not now_playing:
+            try:
+                now_playing = self.player.Metadata
+            except:
+                self.log(logging.INFO, 'cant get track info, :(')
+                return
+
         if self.playing and \
             now_playing and \
             self.playing.get(Metadata_Map.TRACKID) == \
@@ -235,7 +252,7 @@ class Mpris2Source(object):
                     "text", "%s - %s - %s - %s" % (
                     media.get(Metadata_Map.TRACK_NUMBER, ""),
                     media.get(Metadata_Map.TITLE, ""),
-                    media.get(Metadata_Map.ARTIST, ""),
+                    "".join(media.get(Metadata_Map.ARTIST, [])),
                     media.get(Metadata_Map.ALBUM, ""))),
             "storage": kw.get(
                     "storage",
@@ -328,7 +345,7 @@ if "__main__" == __name__:
     mpris2sources = Mpris2Sources()
     def rescan():
         mpris2sources.rescan()
-        gobject.timeout_add_seconds(4, rescan)
+        gobject.timeout_add_seconds(30, rescan)
 
     rescan()
     mloop.run()
