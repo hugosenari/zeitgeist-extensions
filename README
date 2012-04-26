@@ -24,7 +24,14 @@ Require https://github.com/hugosenari/mpris2 and https://github.com/hugosenari/p
 	gmusicbrowser:
 	Is a dataprovider extension to register songs played with gmusicbrowser.
 	Require mpris2source
-	I wrote one perl version of this but for some reason dbus module for perl don't work properly 
+	I wrote one perl version of this but for some reason dbus module for perl don't work properly
+	
+	quodzeitgeist:
+	Is a dataprovider extension to register songs played with quodlibet.
+	Require mpris2source
+	Copy mpris2source and quodzeitgeist folder to ~/.quodlibet/plugins/events/
+		~/.quodlibet/plugins/events/mpris2source/__init__.py
+		~/.quodlibet/plugins/events/quodzeitgeist.py
 
 pidginsource:
 Base code to use pidgin as dataprovider
